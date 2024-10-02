@@ -6,6 +6,10 @@ services:
     container_name: kafka
     image: obsidiandynamics/kafka
     restart: "no"
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     ports:
       - "2181:2181"
       - "9092:9092"
@@ -40,6 +44,54 @@ services:
           brokers: ["kafka:29092"]
     depends_on:
       - "kafka"
+
+  order-db:
+    restart: always
+    image: mongo:latest
+    container_name: order-db
+    networks:
+      - orchestrator-saga
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=123456
+    ports:
+      - "27018:27017"
+
+  product-db:
+    image: postgres:latest
+    container_name: product-db
+    networks:
+      - orchestrator-saga
+    environment:
+      - POSTGRES_DB=product-db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5433:5432"
+
+  payment-db:
+    image: postgres:latest
+    container_name: payment-db
+    networks:
+      - orchestrator-saga
+    environment:
+      - POSTGRES_DB=payment-db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5434:5432"
+
+  inventory-db:
+    image: postgres:latest
+    container_name: inventory-db
+    networks:
+      - orchestrator-saga
+    environment:
+      - POSTGRES_DB=inventory-db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5435:5432"
 
 networks:
   orchestrator-saga:
