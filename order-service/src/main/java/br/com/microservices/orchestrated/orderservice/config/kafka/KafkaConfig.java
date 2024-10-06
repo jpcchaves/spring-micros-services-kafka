@@ -2,6 +2,7 @@ package br.com.microservices.orchestrated.orderservice.config.kafka;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
+import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.*;
 
 @EnableKafka
@@ -24,6 +26,15 @@ public class KafkaConfig {
 
   @Value("${spring.kafka.consumer.auto-offset-reset}")
   private String autoOffsetReset;
+
+  @Value("${spring.kafka.topic.start-saga}")
+  private String startSagaTopic;
+
+  @Value("${spring.kafka.topic.notify-ending}")
+  private String notifyEndingTopic;
+
+  private static final int PARTITION_COUNT = 1;
+  private static final int REPLICA_COUNT = 1;
 
   public KafkaConfig(String bootstrapServers, String groupId, String autoOffsetReset) {
     this.bootstrapServers = bootstrapServers;
@@ -50,6 +61,18 @@ public class KafkaConfig {
     return new KafkaTemplate<>(producerFactory);
   }
 
+  @Bean
+  public NewTopic startSagaTopic() {
+
+    return buildTopic(startSagaTopic);
+  }
+
+  @Bean
+  public NewTopic notifyEndingTopic() {
+
+    return buildTopic(notifyEndingTopic);
+  }
+
   private Map<String, Object> consumerProps() {
 
     Map<String, Object> props = new HashMap<>();
@@ -72,5 +95,10 @@ public class KafkaConfig {
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
 
     return props;
+  }
+
+  private NewTopic buildTopic(String name) {
+
+    return TopicBuilder.name(name).partitions(PARTITION_COUNT).replicas(REPLICA_COUNT).build();
   }
 }

@@ -2,6 +2,7 @@ package br.com.microservices.orchestrated.productvalidationservice.config.kafka;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
+import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.*;
 
 @EnableKafka
@@ -24,6 +26,18 @@ public class KafkaConfig {
 
   @Value("${spring.kafka.consumer.auto-offset-reset}")
   private String autoOffsetReset;
+
+  @Value("${spring.kafka.topic.orchestrator}")
+  private String orchestratorTopic;
+
+  @Value("${spring.kafka.topic.product-validation-success}")
+  private String productValidationSuccess;
+
+  @Value("${spring.kafka.topic.product-validation-fail}")
+  private String productValidationFail;
+
+  private static final int PARTITION_COUNT = 1;
+  private static final int REPLICA_COUNT = 1;
 
   public KafkaConfig(String bootstrapServers, String groupId, String autoOffsetReset) {
     this.bootstrapServers = bootstrapServers;
@@ -50,6 +64,24 @@ public class KafkaConfig {
     return new KafkaTemplate<>(producerFactory);
   }
 
+  @Bean
+  public NewTopic orchestratorTopic() {
+
+    return buildTopic(orchestratorTopic);
+  }
+
+  @Bean
+  public NewTopic productValidationSuccessTopic() {
+
+    return buildTopic(productValidationSuccess);
+  }
+
+  @Bean
+  public NewTopic productValidationFailTopic() {
+
+    return buildTopic(productValidationFail);
+  }
+
   private Map<String, Object> consumerProps() {
 
     Map<String, Object> props = new HashMap<>();
@@ -72,5 +104,10 @@ public class KafkaConfig {
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
 
     return props;
+  }
+
+  private NewTopic buildTopic(String name) {
+
+    return TopicBuilder.name(name).partitions(PARTITION_COUNT).replicas(REPLICA_COUNT).build();
   }
 }
