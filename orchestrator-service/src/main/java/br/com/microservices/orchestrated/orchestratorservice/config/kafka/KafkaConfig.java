@@ -32,12 +32,6 @@ public class KafkaConfig {
   private static final int PARTITION_COUNT = 1;
   private static final int REPLICA_COUNT = 1;
 
-  public KafkaConfig(String bootstrapServers, String groupId, String autoOffsetReset) {
-    this.bootstrapServers = bootstrapServers;
-    this.groupId = groupId;
-    this.autoOffsetReset = autoOffsetReset;
-  }
-
   @Bean
   public ConsumerFactory<String, String> consumerFactory() {
 
