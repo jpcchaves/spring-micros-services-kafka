@@ -42,7 +42,7 @@ services:
         kafka:
           brokers: ["kafka:29092"]
     depends_on:
-      - "kafka"
+      - kafka
 
   order-db:
     restart: always
@@ -93,7 +93,7 @@ services:
       - "5435:5432"
 
   order-service:
-    build: "./order-service"
+    build: ./order-service
     container_name: order-service
     depends_on:
       - kafka
@@ -107,7 +107,7 @@ services:
       - "3000:3000"
 
   orchestrator-service:
-    build: "./orchestrator-service"
+    build: ./orchestrator-service
     container_name: orchestrator-service
     depends_on:
       - kafka
@@ -119,58 +119,58 @@ services:
       - "8080:8080"
 
   product-validation-service:
-  build: "./product-validation-service"
-  container_name: product-validation-service
-  depends_on:
-    - kafka
-    - product-db
-  networks:
-    - orchestrator-saga
-  environment:
-    - KAFKA_BROKER=kafka:29092
-    - DB_HOST=product-db
-    - DB_NAME=product-db
-    - DB_PORT=5432
-    - DB_USER=postgres
-    - DB_PASSWORD=postgres
-  ports:
-    - "8090:8090"
+    build: ./product-validation-service
+    container_name: product-validation-service
+    depends_on:
+      - kafka
+      - product-db
+    networks:
+      - orchestrator-saga
+    environment:
+      - KAFKA_BROKER=kafka:29092
+      - DB_HOST=product-db
+      - DB_NAME=product-db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+    ports:
+      - "8090:8090"
 
-payment-service:
-  build: "./payment-service"
-  container_name: payment-service
-  depends_on:
-    - kafka
-    - payment-db
-  networks:
-    - orchestrator-saga
-  environment:
-    - KAFKA_BROKER=kafka:29092
-    - DB_HOST=payment-db
-    - DB_NAME=payment-db
-    - DB_PORT=5432
-    - DB_USER=postgres
-    - DB_PASSWORD=postgres
-  ports:
-    - "8091:8091"
+  payment-service:
+    build: ./payment-service
+    container_name: payment-service
+    depends_on:
+      - kafka
+      - payment-db
+    networks:
+      - orchestrator-saga
+    environment:
+      - KAFKA_BROKER=kafka:29092
+      - DB_HOST=payment-db
+      - DB_NAME=payment-db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+    ports:
+      - "8091:8091"
 
-inventory-service:
-  build: "./inventory-service"
-  container_name: inventory-service
-  depends_on:
-    - kafka
-    - inventory-db
-  networks:
-    - orchestrator-saga
-  environment:
-    - KAFKA_BROKER=kafka:29092
-    - DB_HOST=inventory-db
-    - DB_NAME=inventory-db
-    - DB_PORT=5432
-    - DB_USER=postgres
-    - DB_PASSWORD=postgres
-  ports:
-    - "8092:8092"
+  inventory-service:
+    build: ./inventory-service
+    container_name: inventory-service
+    depends_on:
+      - kafka
+      - inventory-db
+    networks:
+      - orchestrator-saga
+    environment:
+      - KAFKA_BROKER=kafka:29092
+      - DB_HOST=inventory-db
+      - DB_NAME=inventory-db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+    ports:
+      - "8092:8092"
 
 networks:
   orchestrator-saga:
