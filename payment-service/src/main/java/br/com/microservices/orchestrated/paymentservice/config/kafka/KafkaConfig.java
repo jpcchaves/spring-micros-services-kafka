@@ -2,6 +2,8 @@ package br.com.microservices.orchestrated.paymentservice.config.kafka;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -13,6 +15,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.*;
+import org.springframework.util.ReflectionUtils;
 
 @EnableKafka
 @Configuration
@@ -59,21 +62,9 @@ public class KafkaConfig {
   }
 
   @Bean
-  public NewTopic orchestratorTopic() {
-
-    return buildTopic(orchestratorTopic);
-  }
-
-  @Bean
-  public NewTopic paymentSuccessTopic() {
-
-    return buildTopic(paymentSuccess);
-  }
-
-  @Bean
-  public NewTopic paymentFailTopic() {
-
-    return buildTopic(paymentFail);
+  public Set<NewTopic> kafkaTopics() {
+    Map<String, String> topicProperties = extractTopicProperties();
+    return topicProperties.values().stream().map(this::buildTopic).collect(Collectors.toSet());
   }
 
   private Map<String, Object> consumerProps() {
@@ -101,7 +92,26 @@ public class KafkaConfig {
   }
 
   private NewTopic buildTopic(String name) {
-
     return TopicBuilder.name(name).partitions(PARTITION_COUNT).replicas(REPLICA_COUNT).build();
+  }
+
+  private Map<String, String> extractTopicProperties() {
+    Map<String, String> topics = new HashMap<>();
+
+    ReflectionUtils.doWithFields(
+        this.getClass(),
+        field -> {
+          field.setAccessible(true);
+          Object value = field.get(this);
+
+          if (value instanceof String) {
+            topics.put(field.getName(), (String) value);
+          }
+        },
+        field ->
+            field.isAnnotationPresent(Value.class)
+                && field.getAnnotation(Value.class).value().startsWith("${spring.kafka.topic.}"));
+
+    return topics;
   }
 }

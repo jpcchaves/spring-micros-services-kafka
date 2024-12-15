@@ -1,9 +1,8 @@
 package br.com.microservices.orchestrated.orchestratorservice.config.kafka;
 
-import static br.com.microservices.orchestrated.orchestratorservice.core.enums.ETopics.*;
-
-import java.util.HashMap;
-import java.util.Map;
+import br.com.microservices.orchestrated.orchestratorservice.core.enums.ETopics;
+import java.util.*;
+import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -76,67 +75,13 @@ public class KafkaConfig {
   }
 
   @Bean
-  public NewTopic startSagaTopic() {
-
-    return buildTopic(START_SAGA.getTopic());
-  }
-
-  @Bean
-  public NewTopic orchestratorTopic() {
-
-    return buildTopic(BASE_ORCHESTRATOR.getTopic());
-  }
-
-  @Bean
-  public NewTopic finishSuccessTopic() {
-
-    return buildTopic(FINISH_SUCCESS.getTopic());
-  }
-
-  @Bean
-  public NewTopic finishFailTopic() {
-
-    return buildTopic(FINISH_FAIL.getTopic());
-  }
-
-  @Bean
-  public NewTopic inventorySuccessTopic() {
-
-    return buildTopic(INVENTORY_SUCCESS.getTopic());
-  }
-
-  @Bean
-  public NewTopic inventoryFailTopic() {
-
-    return buildTopic(INVENTORY_FAIL.getTopic());
-  }
-
-  @Bean
-  public NewTopic paymentSuccessTopic() {
-
-    return buildTopic(PAYMENT_SUCCESS.getTopic());
-  }
-
-  @Bean
-  public NewTopic paymentFailTopic() {
-
-    return buildTopic(PAYMENT_FAIL.getTopic());
-  }
-
-  @Bean
-  public NewTopic productValidationSuccessTopic() {
-
-    return buildTopic(PRODUCT_VALIDATION_SUCCESS.getTopic());
-  }
-
-  @Bean
-  public NewTopic productValidationFailTopic() {
-
-    return buildTopic(PRODUCT_VALIDATION_FAIL.getTopic());
+  public Set<NewTopic> buildTopics() {
+    return Set.of(ETopics.values()).stream()
+        .map(topic -> buildTopic(topic.getTopic()))
+        .collect(Collectors.toSet());
   }
 
   private NewTopic buildTopic(String name) {
-
     return TopicBuilder.name(name).partitions(PARTITION_COUNT).replicas(REPLICA_COUNT).build();
   }
 }
