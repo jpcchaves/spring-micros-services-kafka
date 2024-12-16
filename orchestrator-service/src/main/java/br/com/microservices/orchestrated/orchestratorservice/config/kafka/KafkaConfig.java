@@ -2,7 +2,6 @@ package br.com.microservices.orchestrated.orchestratorservice.config.kafka;
 
 import br.com.microservices.orchestrated.orchestratorservice.core.enums.ETopics;
 import java.util.*;
-import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -76,9 +75,13 @@ public class KafkaConfig {
 
   @Bean
   public Set<NewTopic> buildTopics() {
-    return Set.of(ETopics.values()).stream()
-        .map(topic -> buildTopic(topic.getTopic()))
-        .collect(Collectors.toSet());
+    Set<NewTopic> topics = new HashSet<>();
+
+    for (ETopics topic : ETopics.values()) {
+      topics.add(buildTopic(topic.getTopic()));
+    }
+
+    return topics;
   }
 
   private NewTopic buildTopic(String name) {
