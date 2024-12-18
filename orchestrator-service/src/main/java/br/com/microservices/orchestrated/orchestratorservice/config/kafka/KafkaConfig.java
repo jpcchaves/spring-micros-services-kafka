@@ -49,6 +49,17 @@ public class KafkaConfig {
     return new KafkaTemplate<>(producerFactory);
   }
 
+  @Bean
+  public Set<NewTopic> buildTopics() {
+    Set<NewTopic> topics = new HashSet<>();
+
+    for (ETopics topic : ETopics.values()) {
+      topics.add(buildTopic(topic.getTopic()));
+    }
+
+    return topics;
+  }
+
   private Map<String, Object> consumerProps() {
 
     Map<String, Object> props = new HashMap<>();
@@ -71,17 +82,6 @@ public class KafkaConfig {
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
 
     return props;
-  }
-
-  @Bean
-  public Set<NewTopic> buildTopics() {
-    Set<NewTopic> topics = new HashSet<>();
-
-    for (ETopics topic : ETopics.values()) {
-      topics.add(buildTopic(topic.getTopic()));
-    }
-
-    return topics;
   }
 
   private NewTopic buildTopic(String name) {
