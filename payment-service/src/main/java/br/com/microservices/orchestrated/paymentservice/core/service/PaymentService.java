@@ -40,9 +40,26 @@ public class PaymentService {
       handleSuccess(event);
     } catch (Exception e) {
       log.error("Error processing payment: ", e);
+      handleFailCurrentNotExecuted(event, e.getMessage());
     }
 
     producer.sendEvent(jsonUtil.toJson(event));
+  }
+
+  public void realizeRefund(Event event) {
+    changePaymentStatusToRefund(event);
+    event.setStatus(ESagaStatus.FAIL);
+    event.setSource(CURRENT_SOURCE);
+    addHistory(event, "Rollback executed for payment!");
+
+    producer.sendEvent(jsonUtil.toJson(event));
+  }
+
+  private void changePaymentStatusToRefund(Event event) {
+    Payment payment = findByOrderIdAndTransactionId(event);
+    payment.setStatus(EPaymentStatus.REFUND);
+    setEventAmountItems(event, payment);
+    savePayment(payment);
   }
 
   private void checkCurrentValidation(Event event) {
@@ -67,7 +84,7 @@ public class PaymentService {
 
     savePayment(payment);
 
-    setEventAmoutItems(event, payment);
+    setEventAmountItems(event, payment);
   }
 
   private Double calculateAmount(Event event) {
@@ -82,7 +99,7 @@ public class PaymentService {
         .reduce(REDUCE_SUM_VALUE.intValue(), Integer::sum);
   }
 
-  private void setEventAmoutItems(Event event, Payment payment) {
+  private void setEventAmountItems(Event event, Payment payment) {
     event.getPayload().setTotalAmount(payment.getTotalAmount());
     event.getPayload().setTotalItems(payment.getTotalItems());
   }
@@ -104,6 +121,12 @@ public class PaymentService {
     event.setSource(CURRENT_SOURCE);
 
     addHistory(event, "Payment successful!");
+  }
+
+  private void handleFailCurrentNotExecuted(Event event, String message) {
+    event.setStatus(ESagaStatus.ROLLBACK_PENDING);
+    event.setSource(CURRENT_SOURCE);
+    addHistory(event, "Products validation failed! Exception: ".concat(message));
   }
 
   private void changePaymentToSuccess(Payment payment) {
