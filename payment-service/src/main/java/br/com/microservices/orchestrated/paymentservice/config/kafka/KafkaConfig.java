@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -19,6 +20,7 @@ import org.springframework.util.ReflectionUtils;
 
 @EnableKafka
 @Configuration
+@Slf4j
 public class KafkaConfig {
 
   @Value("${spring.kafka.bootstrap-servers}")
@@ -110,7 +112,7 @@ public class KafkaConfig {
         },
         field ->
             field.isAnnotationPresent(Value.class)
-                && field.getAnnotation(Value.class).value().startsWith("${spring.kafka.topic.}"));
+                && field.getAnnotation(Value.class).value().startsWith("${spring.kafka.topic"));
 
     return topics;
   }
