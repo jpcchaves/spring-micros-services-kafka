@@ -1,0 +1,1 @@
+INSERT INTO public.inventory (id, product_code, available) VALUES (1, 'COMIC_BOOKS', 4), (2, 'BOOKS', 2), (3, 'MOVIES', 5), (4, 'MUSIC', 9);
