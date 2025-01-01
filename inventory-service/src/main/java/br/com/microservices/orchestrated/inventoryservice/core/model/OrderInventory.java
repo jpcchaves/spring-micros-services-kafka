@@ -11,6 +11,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Getter
 @Setter
 @ToString
+@Builder
 @Entity
 @Table(name = "order_inventory")
 public class OrderInventory {
@@ -29,10 +30,10 @@ public class OrderInventory {
   private Integer orderQuantity;
 
   @Column(nullable = false)
-  private String oldQuantity;
+  private Integer oldQuantity;
 
   @Column(nullable = false)
-  private String newQuantity;
+  private Integer newQuantity;
 
   @ManyToOne
   @JoinColumn(
