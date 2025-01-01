@@ -35,7 +35,10 @@ public class OrderInventory {
   private String newQuantity;
 
   @ManyToOne
-  @JoinColumn(name = "inventory_id", nullable = false)
+  @JoinColumn(
+      name = "inventory_id",
+      nullable = false,
+      foreignKey = @ForeignKey(name = "inventory_fk", value = ConstraintMode.CONSTRAINT))
   private Inventory inventory;
 
   @CreationTimestamp
