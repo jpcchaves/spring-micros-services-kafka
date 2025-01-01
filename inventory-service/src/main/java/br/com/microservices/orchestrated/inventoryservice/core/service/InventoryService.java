@@ -37,9 +37,41 @@ public class InventoryService {
 
     } catch (Exception e) {
       log.error("Error updating inventory: ", e);
+      handleFailCurrentNotExecuted(event, e.getMessage());
     }
 
     producer.sendEvent(jsonUtil.toJson(event));
+  }
+
+  public void rollbackInventory(Event event) {
+    event.setStatus(ESagaStatus.FAIL);
+    event.setSource(CURRENT_SOURCE);
+
+    try {
+      rollbackInventoryQuantities(event);
+      addHistory(event, "Rollback executed for inventory!");
+    } catch (Exception e) {
+      addHistory(event, "Rollback not executed for inventory! Ex: ".concat(e.getMessage()));
+    }
+
+    producer.sendEvent(jsonUtil.toJson(event));
+  }
+
+  private void rollbackInventoryQuantities(Event event) {
+    orderInventoryRepository
+        .findByOrderIdAndTransactionId(event.getPayload().getId(), event.getTransactionId())
+        .forEach(
+            orderInventory -> {
+              Inventory inventory = orderInventory.getInventory();
+              inventory.setAvailable(orderInventory.getOldQuantity());
+              inventoryRepository.save(inventory);
+
+              log.info(
+                  "Rollback inventory for order {} from {} to {}",
+                  event.getPayload().getId(),
+                  orderInventory.getNewQuantity(),
+                  inventory.getAvailable());
+            });
   }
 
   private void updateInventory(Order order) {
@@ -54,6 +86,12 @@ public class InventoryService {
 
               inventoryRepository.save(inventory);
             });
+  }
+
+  private void handleFailCurrentNotExecuted(Event event, String message) {
+    event.setStatus(ESagaStatus.ROLLBACK_PENDING);
+    event.setSource(CURRENT_SOURCE);
+    addHistory(event, "Fail to update inventory: ".concat(message));
   }
 
   private void checkInventory(int available, int orderQuantity) {
