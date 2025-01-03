@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -11,6 +12,9 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
@@ -21,6 +25,7 @@ import org.springframework.util.ReflectionUtils;
 @EnableKafka
 @Configuration
 @Slf4j
+@RequiredArgsConstructor
 public class KafkaConfig {
 
   @Value("${spring.kafka.bootstrap-servers}")
@@ -40,6 +45,8 @@ public class KafkaConfig {
 
   @Value("${spring.kafka.topic.payment-fail}")
   private String paymentFail;
+
+  private final ApplicationContext applicationContext;
 
   private static final int PARTITION_COUNT = 1;
   private static final int REPLICA_COUNT = 1;
@@ -64,9 +71,15 @@ public class KafkaConfig {
   }
 
   @Bean
-  public Set<NewTopic> kafkaTopics() {
+  public Set<NewTopic> buildTopics() {
+    BeanDefinitionRegistry registry =
+        (BeanDefinitionRegistry) applicationContext.getAutowireCapableBeanFactory();
+
     Map<String, String> topicProperties = extractTopicProperties();
-    return topicProperties.values().stream().map(this::buildTopic).collect(Collectors.toSet());
+
+    return topicProperties.values().stream()
+        .map(topic -> createAndRegisterTopic(topic, registry))
+        .collect(Collectors.toSet());
   }
 
   private Map<String, Object> consumerProps() {
@@ -115,5 +128,19 @@ public class KafkaConfig {
                 && field.getAnnotation(Value.class).value().startsWith("${spring.kafka.topic"));
 
     return topics;
+  }
+
+  private NewTopic createAndRegisterTopic(String topicName, BeanDefinitionRegistry registry) {
+    log.info("Creating topic: {}", topicName);
+
+    BeanDefinitionBuilder builder =
+        BeanDefinitionBuilder.genericBeanDefinition(NewTopic.class)
+            .addConstructorArgValue(topicName)
+            .addConstructorArgValue(PARTITION_COUNT)
+            .addConstructorArgValue(REPLICA_COUNT);
+
+    registry.registerBeanDefinition(topicName, builder.getBeanDefinition());
+
+    return TopicBuilder.name(topicName).partitions(PARTITION_COUNT).replicas(REPLICA_COUNT).build();
   }
 }
